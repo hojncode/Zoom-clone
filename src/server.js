@@ -12,7 +12,6 @@ app.get("/", (req,res) => res.render("home"));
 app.get("*", (req,res) => res.redirect("/"));
 
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
-// app.listen(3000, handleListen);   
 
 const server = http.createServer(app);
 
@@ -23,15 +22,23 @@ function onSocketClose() {
     console.log("Disconnected from the Browser 📵")
 }
 
-function onSocketMessage(message) {
-    console.log(message.toString('utf-8'))
-}
+// function onSocketMessage(message) {
+//     console.log(message.toString('utf-8'))
+// }
+
+const sockets = [];
 
 wss.on("connection", (socket) => {
+    sockets.push(socket);
     console.log("Conneted to Browser 🔄");
     socket.on("close", onSocketClose)
-    socket.on("message",onSocketMessage)
-    socket.send("hello");
+    socket.on("message",(message) => {
+        //입력된 텍스트를 utf-8로 변환해서 받기.
+        const utfMessage = message.toString('utf-8');
+        //어떤 브라우저에서도 동일하게 입력된 텍스트를 받을 수 있음.
+        sockets.forEach(aSocket => aSocket.send(utfMessage))
+        // socket.send(utfMessage);
+    });
 });
 
 server.listen(3000, handleListen)
