@@ -30,23 +30,26 @@ const sockets = [];
 
 wss.on("connection", (socket) => {
     sockets.push(socket);
+    socket["nickname"] = "Anonymous"
     console.log("Conneted to Browser 🔄");
     socket.on("close", onSocketClose)
-    socket.on("message",(message) => {
+    socket.on("message",(msg) => {
         //입력된 텍스트를 utf-8로 변환해서 받기.
-        const utfMessage = message.toString('utf-8');
-        sockets.forEach((aSocket) => aSocket.send(utfMessage))
-        // socket.send(utfMessage);
+        const utfMessage = msg.toString('utf-8');
+        const message = JSON.parse(utfMessage);
+        switch(message.type){
+            case "new_message":
+                sockets.forEach((aSocket) => aSocket.send(`${socket.nickname}:${message.payload}`))
+                break;
+            case "nickname":
+                socket["nickname"] = message.payload;
+        }
+        // if (message.type === "new_message") {
+        //     sockets.forEach((aSocket) => aSocket.send(message.payload))
+        // } else if(message.type === "nickname"){
+        //     console.log(message.payload);
+        // }
     });
 });
 
 server.listen(3000, handleListen);
-
-// {
-//     type:"message",
-//     payload:"hello"
-// },
-// {
-//     type:"nickname",
-//     payload:"hi"
-// }
