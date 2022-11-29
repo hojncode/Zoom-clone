@@ -35,10 +35,18 @@ wss.on("connection", (socket) => {
     socket.on("message",(message) => {
         //입력된 텍스트를 utf-8로 변환해서 받기.
         const utfMessage = message.toString('utf-8');
-        //어떤 브라우저에서도 동일하게 입력된 텍스트를 받을 수 있음.
-        sockets.forEach(aSocket => aSocket.send(utfMessage))
+        sockets.forEach((aSocket) => aSocket.send(utfMessage))
         // socket.send(utfMessage);
     });
 });
 
-server.listen(3000, handleListen)
+server.listen(3000, handleListen);
+
+// {
+//     type:"message",
+//     payload:"hello"
+// },
+// {
+//     type:"nickname",
+//     payload:"hi"
+// }
