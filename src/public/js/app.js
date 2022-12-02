@@ -1,36 +1,68 @@
-const messageList = document.querySelector("ul");
-const messageForm = document.querySelector("form")
-const socket = new WebSocket(`ws://${window.location.host}`);
+const socket = io();
 
-function handleOpen() {
-    console.log("Connected to Server ✔️");
+const welcome = document.getElementById("welcome");
+const form = welcome.querySelector("form");
+const room = document.getElementById("room");
+
+room.hidden = true;
+
+let roomName;
+
+function addMessage(message) {
+  const ul = room.querySelector("ul");
+  const li = document.createElement("li");
+  li.innerText = message;
+  ul.appendChild(li);
 };
 
-function handleMessage(message) {
-    console.log("New Message: ",message.data);
-};
-
-function handleClose() {
-    console.log("Disconnected from Sever ❌");
+function handleMessageSubmit(event) {
+  event.preventDefault();
+  const input = room.querySelector("#msg input");
+  const value = input.value;
+  socket.emit("new_message", input.value, roomName, () => {
+    addMessage(`You: ${value}`);
+  });
+  input.value = "";
 }
 
-socket.addEventListener("open", handleOpen)
-
-socket.addEventListener("message", handleMessage)
-
-socket.addEventListener("close", handleClose)
-
-// setTimeout(() => {
-//     socket.send("This message from the browser! - after 1sec")
-// }, 1000);
-
-function handleSubmit(event) {
-    event.preventDefault();
-    const input = messageForm.querySelector("input");
-    //socket.send -> sever로 ()안의 값을 보내줌.
-    socket.send(input.value);
-    //"" 비워줌.
-    input.value = "";
+function showRoom(newCount) {
+  welcome.hidden = true;
+  room.hidden = false;
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName}(${newCount})`;
+  const msgForm = room.querySelector("#msg");
+  msgForm.addEventListener("submit", handleMessageSubmit);
 }
 
-messageForm.addEventListener("submit", handleSubmit);
+function handleRoomSubmit(event) {
+  event.preventDefault();
+  const input = form.querySelector("input");
+  socket.emit("enter_room", input.value, showRoom);
+  roomName = input.value;
+  input.value = "";
+}
+
+form.addEventListener("submit",handleRoomSubmit);
+
+socket.on("welcome", (user, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
+  addMessage(`${user} arrived!`);
+});
+
+socket.on("bye", (left, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
+  addMessage(`${left} left...`);
+});
+
+socket.on("new_message", addMessage);
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li);
+  })
+})
